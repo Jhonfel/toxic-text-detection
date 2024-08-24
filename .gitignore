@@ -1,0 +1,72 @@
+# Archivos y directorios generados por Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Entornos virtuales
+venv/
+env/
+.env
+
+# Archivos de distribución / empaquetado
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Archivos de Jupyter Notebook
+.ipynb_checkpoints
+
+# Archivos de datos procesados y modelos
+data/processed/
+models/*.pkl
+
+# Archivos de registro
+*.log
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Archivos de IDE y editores de texto
+.vscode/
+.idea/
+*.swp
+*.swo
+.spyderproject
+.spyproject
+.ropeproject
+
+# Archivos de configuración local
+instance/
+.webassets-cache
+
+# Archivos de documentación generados
+docs/_build/
+
+# Archivos de cobertura de pruebas
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# Archivos temporales
+tmp/
+temp/
