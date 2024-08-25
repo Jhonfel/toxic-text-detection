@@ -22,6 +22,7 @@ toxic-text-detection/
 │   ├── 📓 03_model_development.ipynb
 │   └── 📓 04_model_evaluation.ipynb
 ├── 📁 src/
+│   ├── 📁 toxic_text_detection/
 │   ├── 📄 __init__.py
 │   ├── 📄 data_processing.py
 │   ├── 📄 feature_engineering.py

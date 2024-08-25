@@ -11,6 +11,8 @@ import os
 from tqdm import tqdm
 
 from .data_processing import process_text_for_inference
+from .data_processing import process_data
+
 from .feature_engineering import create_tfidf_features, create_word2vec_features, select_best_features
 
 class ToxicDetectionModel:
@@ -25,7 +27,6 @@ class ToxicDetectionModel:
         """
         Preprocesa los datos utilizando las funciones de data_processing.py
         """
-        from data_processing import process_data
         return process_data(df, self.offensive_words)
 
     def create_features(self, texts):
@@ -48,7 +49,9 @@ class ToxicDetectionModel:
         Selecciona las mejores características
         """
         print("Seleccionando las mejores características...")
-        best_features, self.selector = select_best_features(X, y)
+        # Asegurar que todas las características sean no negativas
+        X_non_negative = np.abs(X)
+        best_features, self.selector = select_best_features(X_non_negative, y)
         return best_features
 
     def train(self, X, y, param_dist=None, n_iter=100, cv=5):
