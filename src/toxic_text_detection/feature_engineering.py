@@ -8,6 +8,7 @@ import nltk
 from tqdm import tqdm
 import joblib
 import os
+from .data_processing import process_text_for_inference
 
 # Asegurar que se han descargado los recursos necesarios de NLTK
 nltk.download('punkt')
@@ -64,6 +65,9 @@ def create_features(df):
     print("Combinando características...")
     features = np.hstack((tfidf_matrix.toarray(), w2v_features, df[['ofensivas_count']].values))
     
+    # Asegurar que todas las características sean no negativas
+    features = np.abs(features)
+    
     print("Seleccionando las mejores características...")
     best_features, selector = select_best_features(features, df['label'])
     
@@ -92,7 +96,6 @@ def process_text_for_model(text, tfidf_vectorizer, w2v_model, selector, offensiv
     """
     Procesa un texto individual para la inferencia del modelo.
     """
-    from data_processing import process_text_for_inference
     
     # Procesar el texto
     processed = process_text_for_inference(text, offensive_words)
