@@ -36,10 +36,13 @@ toxic-text-detection/
 ├── 📁 reports/
 │   ├── 📁 figures/
 │   └── 📓 final_report.ipynb
+├── 📁 app/
+│   └── 📄 app.py
 ├── 📄 requirements.txt
 ├── 📄 README.md
 ├── 📄 .gitignore
 └── 📄 setup.py
+└── 📄 Dockerfile
 ```
 
 ## 🚀 Instalación
