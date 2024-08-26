@@ -21,6 +21,7 @@ toxic-text-detection/
 │   ├── 📓 02_feature_engineering.ipynb
 │   ├── 📓 03_model_development.ipynb
 │   └── 📓 04_model_evaluation.ipynb
+│   └── 📓 05_experiment_bert.ipynb
 ├── 📁 src/
 │   └── 📁 toxic_text_detection/
 │       ├── 📄 __init__.py
@@ -35,14 +36,13 @@ toxic-text-detection/
 ├── 📁 models/
 │   └── 📄 best_model.pkl
 ├── 📁 reports/
-│   ├── 📁 figures/
 │   └── 📓 final_report.ipynb
 ├── 📁 app/
 │   └── 📄 app.py
 ├── 📄 requirements.txt
 ├── 📄 README.md
 ├── 📄 .gitignore
-└── 📄 setup.py
+├── 📄 setup.py
 └── 📄 Dockerfile
 ```
 

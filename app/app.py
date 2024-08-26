@@ -6,14 +6,21 @@ from nltk.tokenize import word_tokenize
 import spacy
 from toxic_text_detection.data_processing import process_text_for_inference
 from toxic_text_detection.model import ToxicDetectionModel
+import torch
+from transformers import BertTokenizerFast, BertForSequenceClassification
 
 app = Flask(__name__)
 
-# Cargar el modelo
+# Cargar el modelo XGBoost
 model = ToxicDetectionModel.load('./models')
 
 # Cargar el modelo de spaCy
 nlp = spacy.load("es_core_news_sm")
+
+# Cargar el modelo BERT
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+bert_model = BertForSequenceClassification.from_pretrained('./models/bert_finetuned').to(device)
+bert_tokenizer = BertTokenizerFast.from_pretrained('./models/bert_finetuned')
 
 def predict_toxicity(text):
     processed = process_text_for_inference(text, model.offensive_words)
@@ -34,6 +41,15 @@ def predict_toxicity(text):
     
     return bool(prediction[0]), probability
 
+def predict_toxicity_bert(text):
+    inputs = bert_tokenizer(text, return_tensors="pt", truncation=True, padding=True, max_length=512).to(device)
+    with torch.no_grad():
+        outputs = bert_model(**inputs)
+    probabilities = torch.softmax(outputs.logits, dim=1)
+    prediction = torch.argmax(probabilities, dim=1).item()
+    toxicity_prob = probabilities[0][1].item()
+    return bool(prediction), toxicity_prob
+
 def get_doc_vector(doc, model):
     words = [word for word in doc if word in model.wv]
     if len(words) > 0:
@@ -41,12 +57,17 @@ def get_doc_vector(doc, model):
     else:
         return np.zeros(model.vector_size)
 
-
 @app.route('/predict', methods=['POST'])
 def predict():
     data = request.json
     text = data['text']
-    toxic, probability = predict_toxicity(text)
+    model_type = data.get('model', 'xgboost')
+    
+    if model_type == 'xgboost':
+        toxic, probability = predict_toxicity(text)
+    else:
+        toxic, probability = predict_toxicity_bert(text)
+    
     return jsonify({'toxic': toxic, 'probability': float(probability)})
 
 # HTML template con estilos CSS inline
@@ -115,11 +136,21 @@ html_template = """
             background-color: #2ecc71;
             color: white;
         }
+        .model-select {
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
     <h1>Detector de Textos Tóxicos</h1>
     <form id="toxicForm">
+        <div class="model-select">
+            <label for="modelSelect">Seleccione el modelo:</label>
+            <select id="modelSelect">
+                <option value="xgboost">XGBoost</option>
+                <option value="bert">BERT</option>
+            </select>
+        </div>
         <textarea id="textInput" placeholder="Ingrese el texto a analizar"></textarea>
         <button type="submit">Analizar</button>
     </form>
@@ -129,12 +160,13 @@ html_template = """
         document.getElementById('toxicForm').addEventListener('submit', function(e) {
             e.preventDefault();
             var text = document.getElementById('textInput').value;
+            var model = document.getElementById('modelSelect').value;
             fetch('/predict', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({text: text}),
+                body: JSON.stringify({text: text, model: model}),
             })
             .then(response => response.json())
             .then(data => {
