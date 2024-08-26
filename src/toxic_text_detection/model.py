@@ -124,17 +124,47 @@ class ToxicDetectionModel:
         joblib.dump(self.selector, os.path.join(output_dir, 'feature_selector.joblib'))
         joblib.dump(self.offensive_words, os.path.join(output_dir, 'offensive_words.joblib'))
         print(f"Modelo y componentes guardados en {output_dir}")
-
     @classmethod
     def load(cls, input_dir):
         """
-        Carga el modelo y sus componentes
+        Carga el modelo y sus componentes si existen
         """
         model = cls()
+        
+        # Cargar el modelo XGBoost (obligatorio)
         model.model = joblib.load(os.path.join(input_dir, 'xgboost_model.joblib'))
-        model.tfidf_vectorizer = joblib.load(os.path.join(input_dir, 'tfidf_vectorizer.joblib'))
+        
+        # Cargar el modelo Word2Vec (obligatorio)
         model.w2v_model = joblib.load(os.path.join(input_dir, 'w2v_model.joblib'))
-        model.selector = joblib.load(os.path.join(input_dir, 'feature_selector.joblib'))
-        model.offensive_words = joblib.load(os.path.join(input_dir, 'offensive_words.joblib'))
+        
+        # Cargar el vectorizador TF-IDF si existe
+        tfidf_path = os.path.join(input_dir, 'tfidf_vectorizer.joblib')
+        if os.path.exists(tfidf_path):
+            model.tfidf_vectorizer = joblib.load(tfidf_path)
+        else:
+            model.tfidf_vectorizer = None
+        
+        # Cargar el selector de características si existe
+        selector_path = os.path.join(input_dir, 'feature_selector.joblib')
+        if os.path.exists(selector_path):
+            model.selector = joblib.load(selector_path)
+        else:
+            model.selector = None
+        
+        # Cargar la lista de palabras ofensivas
+        model.offensive_words = [
+            "asesinato", "asno", "bastardo", "bollera", "cabron", "caca", "chupada", 
+            "chupapollas", "chupeton", "concha", "concha de tu madre", "cono", 
+            "coprofagia", "culo", "drogas", "esperma", "fiesta de salchichas", "facista", "fascista", "estupido", "hdsp"
+            "follador", "follar", "gilipichis", "gilipollas", "gilipolla", "hacer paja", 
+            "haciendo el amor", "heroina", "hija de puta", "hijaputa", "hijo de puta", 
+            "hijoputa", "idiota", "imbecil", "infierno", "jilipollas", "kapullo", 
+            "lameculos", "maciza", "macizorra", "maldito", "mamada", "marica", 
+            "maricon", "mariconazo", "martillo", "mierda", "nazi", "orina", "pedo", 
+            "pendejo", "pervertido", "pezon", "pinche", "pis", "prostituta", "puta", 
+            "racista", "ramera", "sadico", "semen", "sexo", "sexo oral", "soplagaitas", 
+            "soplapollas", "tetas grandes", "tia buena", "travesti", "trio", "verga", 
+            "vete a la mierda", "vulva"
+        ]
+        
         return model
-

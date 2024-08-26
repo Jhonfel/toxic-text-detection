@@ -4,30 +4,50 @@ import numpy as np
 from gensim.models import Word2Vec
 from nltk.tokenize import word_tokenize
 import spacy
-from src.data_processing import preprocess_text
-from src.feature_engineering import get_doc_vector
+from toxic_text_detection.data_processing import process_text_for_inference
+from toxic_text_detection.model import ToxicDetectionModel
 
 app = Flask(__name__)
 
-# Cargar modelos
-w2v_model = joblib.load('./models/w2v_model.joblib')
-xgb_model = joblib.load('./models/xgb_optimized.joblib')
+# Cargar el modelo
+model = ToxicDetectionModel.load('./models')
 
 # Cargar el modelo de spaCy
 nlp = spacy.load("es_core_news_sm")
 
 def predict_toxicity(text):
-    processed_text = preprocess_text(text)
-    doc_vector = get_doc_vector(word_tokenize(processed_text), w2v_model)
-    prediction = xgb_model.predict(doc_vector.reshape(1, -1))
-    return bool(prediction[0])
+    processed = process_text_for_inference(text, model.offensive_words)
+    print(f"processed {processed}")
+    
+    # Obtener el vector Word2Vec del texto lematizado
+    doc_vector = get_doc_vector(processed['lemmatized_message'].split(), model.w2v_model)
+    
+    # Combinar el vector Word2Vec con el conteo de palabras ofensivas
+    features = np.concatenate([doc_vector, [processed['ofensivas_count']]])
+    
+    # Reshape para que sea una muestra 2D (el modelo espera un array 2D)
+    features = features.reshape(1, -1)
+    
+    # Realizar la predicción
+    prediction = model.model.predict(features)
+    probability = model.model.predict_proba(features)[0][1]
+    
+    return bool(prediction[0]), probability
+
+def get_doc_vector(doc, model):
+    words = [word for word in doc if word in model.wv]
+    if len(words) > 0:
+        return np.mean(model.wv[words], axis=0)
+    else:
+        return np.zeros(model.vector_size)
+
 
 @app.route('/predict', methods=['POST'])
 def predict():
     data = request.json
     text = data['text']
-    toxic = predict_toxicity(text)
-    return jsonify({'toxic': toxic})
+    toxic, probability = predict_toxicity(text)
+    return jsonify({'toxic': toxic, 'probability': float(probability)})
 
 # HTML template con estilos CSS inline
 html_template = """
@@ -120,10 +140,10 @@ html_template = """
             .then(data => {
                 var resultDiv = document.getElementById('result');
                 if (data.toxic) {
-                    resultDiv.innerHTML = "El texto es tóxico";
+                    resultDiv.innerHTML = `El texto es tóxico (Probabilidad: ${(data.probability * 100).toFixed(2)}%)`;
                     resultDiv.className = "toxic";
                 } else {
-                    resultDiv.innerHTML = "El texto no es tóxico";
+                    resultDiv.innerHTML = `El texto no es tóxico (Probabilidad: ${(data.probability * 100).toFixed(2)}%)`;
                     resultDiv.className = "non-toxic";
                 }
             });
